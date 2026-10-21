@@ -1,0 +1,32 @@
+[
+{
+"order_id": "AF-1001",
+"part_name": "Tarcza hamulcowa przód BOSCH",
+"supplier_id": "SUP-01",
+"purchase_date": "2026-10-10"
+},
+{
+"order_id": "AF-1002",
+"part_name": "Zestaw sprzęgła VALEO",
+"supplier_id": "SUP-04",
+"purchase_date": "2026-10-01"
+},
+{
+"order_id": "AF-1003",
+"part_name": "Amortyzator tył SACHS",
+"supplier_id": "SUP-05",
+"purchase_date": "2026-09-25"
+},
+{
+"order_id": "AF-1004",
+"part_name": "Klocki hamulcowe TRW",
+"supplier_id": "SUP-02",
+"purchase_date": "2026-09-10"
+},
+{
+"order_id": "AF-1005",
+"part_name": "Reflektor przedni HELLA",
+"supplier_id": "SUP-01",
+"purchase_date": "2026-10-08"
+}
+]

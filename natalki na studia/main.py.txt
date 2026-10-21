@@ -1,0 +1,106 @@
+import json
+import os
+from datetime import datetime
+
+def wczytaj_tabele(nazwa_pliku):
+with open(nazwa_pliku, "r", encoding="utf-8") as plik:
+return json.load(plik)
+
+def wyslij_powiadomienie_api(nazwa_dostawcy, nr_zamowienia):
+print(f"\n[MOCK API] Łączenie z serwerem hurtowni {nazwa_dostawcy}...")
+print(f"[MOCK API] Wysłano zgłoszenie zwrotu dla zamówienia {nr_zamowienia}. Status: 200 OK (Zaakceptowano).")
+
+def generuj_dokument(typ_decyzji, nr_zamowienia, czesc, dostawca, info_dni):
+os.makedirs("dokumenty_erp", exist_ok=True)
+
+if typ_decyzji == "ZWROT_DOSTAWCA":
+nazwa_pliku = f"dokumenty_erp/ZWROT_DOSTAWCA_{nr_zamowienia}.txt"
+tytul = "DOKUMENT ZWROTU DO DOSTAWCY (WZ-ZWROT B2B)"
+else:
+nazwa_pliku = f"dokumenty_erp/PRZYJECIE_MAGAZYN_WLASNY_{nr_zamowienia}.txt"
+tytul = "DOKUMENT PRZYJĘCIA NA MAGAZYN WŁASNY (PZ-WEW)"
+
+tresc = (
+f"==================================================\n"
+f"{tytul}\n"
+f"==================================================\n"
+f"Numer zamówienia: {nr_zamowienia}\n"
+f"Zwracany produkt: {czesc}\n"
+f"Hurtownia: {dostawca}\n"
+f"Szczegóły: {info_dni}\n"
+f"==================================================\n"
+)
+
+with open(nazwa_pliku, "w", encoding="utf-8") as plik:
+plik.write(tresc)
+
+print(f"[DOKUMENT ERP] Wygenerowano plik: {nazwa_pliku}")
+
+def uruchom_system():
+tabela_dostawcow = wczytaj_tabele("suppliers.json")
+tabela_zamowien = wczytaj_tabele("orders.json")
+
+dzisiaj = datetime.strptime("2026-10-17", "%Y-%m-%d").date()
+
+print("=================================================================")
+print(" SYSTEM ERP AUTOFIXER.COM - WERYFIKACJA ZWROTÓW DO DOSTAWCÓW ")
+print("=================================================================")
+print(f"Data w systemie: {dzisiaj}\n")
+
+print("TABELA DOSTAWCÓW I LIMITÓW CZASOWYCH NA ZWROT:")
+print("-" * 65)
+print(f"{'ID':<10} | {'Nazwa Hurtowni':<28} | {'Limit dni na zwrot'}")
+print("-" * 65)
+for dostawca in tabela_dostawcow:
+print(f"{dostawca['supplier_id']:<10} | {dostawca['supplier_name']:<28} | {dostawca['return_days_limit']} dni")
+print("-" * 65)
+
+while True:
+nr_zamowienia = input("\nWpisz numer zamówienia z paczki (np. AF-1001, AF-1002) lub 'koniec': ").strip().upper()
+
+if nr_zamowienia == "KONIEC":
+print("Zamykanie programu ERP...")
+break
+
+znalezione_zamowienie = None
+for wiersz in tabela_zamowien:
+if wiersz["order_id"] == nr_zamowienia:
+znalezione_zamowienie = wiersz
+break
+
+if not znalezione_zamowienie:
+print(f"[BŁĄD] Nie znaleziono zamówienia o numerze {nr_zamowienia} w tabeli!")
+continue
+
+znaleziony_dostawca = None
+for dostawca in tabela_dostawcow:
+if dostawca["supplier_id"] == znalezione_zamowienie["supplier_id"]:
+znaleziony_dostawca = dostawca
+break
+
+data_zakupu = datetime.strptime(znalezione_zamowienie["purchase_date"], "%Y-%m-%d").date()
+ile_dni_minelo = (dzisiaj - data_zakupu).days
+limit_dni = znaleziony_dostawca["return_days_limit"]
+
+print("\n--- WYNIK WERYFIKACJI W TABELI ERP ---")
+print(f"Produkt: {znalezione_zamowienie['part_name']}")
+print(f"Przypisany dostawca: {znaleziony_dostawca['supplier_name']}")
+print(f"Data zakupu części: {data_zakupu}")
+print(f"Upłynęło dni: {ile_dni_minelo} dni (Limit u dostawcy: {limit_dni} dni)")
+
+if ile_dni_minelo <= limit_dni:
+pozostalo = limit_dni - ile_dni_minelo
+komunikat = f"Dostawca {znaleziony_dostawca['supplier_name']} przyjmie zwrot. Pozostało jeszcze {pozostalo} dni."
+print(f"\n[SUKCES] {komunikat}")
+
+wyslij_powiadomienie_api(znaleziony_dostawca["supplier_name"], nr_zamowienia)
+generuj_dokument("ZWROT_DOSTAWCA", nr_zamowienia, znalezione_zamowienie["part_name"], znaleziony_dostawca["supplier_name"], komunikat)
+else:
+przekroczono = ile_dni_minelo - limit_dni
+komunikat = f"Limit zwrotu do {znaleziony_dostawca['supplier_name']} minął {przekroczono} dni temu. Odesłanie niemożliwe."
+print(f"\n[ODMOWA] {komunikat}")
+
+generuj_dokument("MAGAZYN_WLASNY", nr_zamowienia, znalezione_zamowienie["part_name"], znaleziony_dostawca["supplier_name"], komunikat)
+
+if __name__ == "__main__":
+uruchom_system()

@@ -1,0 +1,27 @@
+[
+{
+"supplier_id": "SUP-01",
+"supplier_name": "Inter Cars S.A.",
+"return_days_limit": 14
+},
+{
+"supplier_id": "SUP-02",
+"supplier_name": "Moto-Profil Sp. z o.o.",
+"return_days_limit": 21
+},
+{
+"supplier_id": "SUP-03",
+"supplier_name": "Auto Partner S.A.",
+"return_days_limit": 14
+},
+{
+"supplier_id": "SUP-04",
+"supplier_name": "Hart Sp. z o.o.",
+"return_days_limit": 7
+},
+{
+"supplier_id": "SUP-05",
+"supplier_name": "Polcar PPH",
+"return_days_limit": 30
+}
+]
